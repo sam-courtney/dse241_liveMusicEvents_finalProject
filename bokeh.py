@@ -8,6 +8,7 @@ from bokeh.tile_providers import get_provider, OSM
 from bokeh.models import ColumnDataSource, CDSView, BooleanFilter, CustomJS
 from bokeh.layouts import layout
 from bokeh.models import DateRangeSlider
+from bokeh.transform import factor_cmap
 from pyproj import Transformer
 
 
@@ -174,6 +175,7 @@ tooltips = [
     ('Country: ', '@country'),
     ('Event Type: ', '@festival_flag'),
     ('Lineup: ', '@lineup'),
+    ('','__________________')
 ]
 
 source = ColumnDataSource(test_df)
@@ -196,34 +198,39 @@ def update(attr, old, new):
 
     start = ts_extract(new[0])
     end = ts_extract(new[1])
-    print(start, end)
+    #print(start, end)
     data=source.data
     mask = np.logical_and(data['datetime'] > start, data['datetime'] < end)
-    #source.data['show_date'] = mask
-    #print(data['index'].shape)
-    #source.trigger('change')
-
     view.filters=[BooleanFilter(mask)]
-    #p.view = view
+
 
 date_slider = DateRangeSlider(
-    title=" Adjust Date range",
+    title=" Adjust Event Date Range",
     start=min(test_df['datetime']),
     end=max(test_df['datetime']),
+    width=1000,
     step=1,
     value=(
         min(test_df['datetime']), max(test_df['datetime'])
     )
 )
 
-date_slider.on_change('value_throttled', update)
-# range bounds supplied in web mercator coordinates
-p = figure(x_range=(-18000000, 20000000), y_range=(-7500000, 11500000),
+date_slider.on_change('value', update)
+
+# color map for circles object
+color_map = factor_cmap('festival_flag', palette=['dodgerblue', 'darkorange'], factors=sorted(test_df['festival_flag'].unique()))
+
+p = figure(x_range=(-18000000, 20000000), y_range=(-7500000, 11500000), # range bounds supplied in web mercator coordinates
            x_axis_type='mercator', y_axis_type='mercator',
            height=700, width=1500,
-           tools=tools, tooltips=tooltips, active_scroll='wheel_zoom')
+           tools=tools, active_scroll='wheel_zoom',
+           tooltips=tooltips)
 p.add_tile(tile_provider)
-p.circle(x='MercatorX', y='MercatorY', size=6, fill_color='dodgerblue', line_color='dodgerblue', fill_alpha=.3, source=source, view=view)
+p.circle(x='MercatorX', y='MercatorY',
+         size=8, fill_color=color_map, line_color=color_map, fill_alpha=.3,
+         legend_group='festival_flag',
+         source=source, view=view)
+p.legend.location = 'top_right'
 
 
 layout = layout([date_slider], [p])#, [full_table], [filtered_table])
