@@ -180,28 +180,21 @@ tooltips = [
 ]
 
 source = ColumnDataSource(test_df)
-source2 = ColumnDataSource(test_df)
-
-# full_table = DataTable(source=source)
-
-
 view = CDSView(source=source)
-
-# filtered_table = DataTable(source=source, view=data_view)
 
 text_header = Div(text='<H1>Live Music Across Time<H1>', width=300, height=60)
 
 show_dat = source.data['show_date']
-view = CDSView(source=source, filters=[BooleanFilter(show_dat)])
 
 # columns = [
 #     TableColumn(field='artist', title='Artist'),
 #     TableColumn(field='lineup', title='Co-Performing Artists')
 # ]
 #
-# table_data = test_df[['artist','lineup']].explode('lineup').drop_duplicates(inplace=True, ignore_index=True)
+# table_data = test_df[['artist','lineup']].explode('lineup').drop_duplicates(ignore_index=True)
+# table_data = table_data[table_data['lineup'] != table_data['artist']]
 # table_source = ColumnDataSource(table_data)
-# filtered_table = DataTable(source=table_source, columns=columns)#, view=data_view)
+# table = DataTable(source=table_source, columns=columns)
 
 def ts_extract(xl_timestamp):
     d = datetime.datetime.fromtimestamp(int(xl_timestamp / 1000)).strftime('%Y-%m-%d')
@@ -214,7 +207,6 @@ def ts_extract(xl_timestamp):
 def update(attr, old, new):
     start = ts_extract(new[0])
     end = ts_extract(new[1])
-    # print(start, end)
     data = source.data
     mask = np.logical_and(data['datetime'] > start, data['datetime'] < end)
     view.filters = [BooleanFilter(mask)]
@@ -224,7 +216,7 @@ date_slider = DateRangeSlider(
     title=" Adjust Event Date Range",
     start=min(test_df['datetime']),
     end=max(test_df['datetime']),
-    width=1000,
+    width=1235,
     step=1,
     value=(
         min(test_df['datetime']), max(test_df['datetime'])
@@ -261,8 +253,10 @@ country_dropdown.on_click(update_country)
 
 
 def update_city(event):
+    print(event.item)
     data = source.data
     mask = data['city'] == str(event.item)
+    print(mask)
     view.filters = [BooleanFilter(mask)]
 
 
@@ -305,6 +299,6 @@ p.axis.visible = False
 p.legend.location = 'top_right'
 
 layout = layout([text_header], [[genre_dropdown], [artist_dropdown], [country_dropdown], [city_dropdown]],
-                [date_slider], [p])  # , [full_table], [filtered_table])
+                [date_slider], [p])#, [table])
 
 curdoc().add_root(layout)
