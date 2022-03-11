@@ -1,7 +1,6 @@
 import requests
 import pandas as pd
 import numpy as np
-import datetime
 
 from geopy.geocoders import Nominatim
 from geopy.extra.rate_limiter import RateLimiter
@@ -139,9 +138,9 @@ def get_locations(df, latitude_column='latitude', longitude_column='longitude'):
 
 def is_festival_column(df, input_col='lineup', output_col='festival_flag', festival_size_cutoff=5):
     new_df = df.copy()
-    df['lineup_size'] = df[input_col].str.len()
-    df[output_col] = np.where(df['lineup_size'] > festival_size_cutoff, 'Festival', 'Concert')
-    df[output_col] = df[output_col].astype(str)
+    new_df['lineup_size'] = new_df[input_col].str.len()
+    new_df[output_col] = np.where(new_df['lineup_size'] > festival_size_cutoff, 'Festival', 'Concert')
+    new_df[output_col] = new_df[output_col].astype(str)
     return new_df
 
 
