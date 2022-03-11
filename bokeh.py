@@ -8,6 +8,7 @@ from bokeh.tile_providers import get_provider, OSM
 from bokeh.models import ColumnDataSource, CDSView, BooleanFilter, CustomJS
 from bokeh.layouts import layout
 from bokeh.models import DateRangeSlider, Div, Dropdown
+from bokeh.transform import factor_cmap
 from pyproj import Transformer
 
 
@@ -175,6 +176,7 @@ tooltips = [
     ('Country: ', '@country'),
     ('Event Type: ', '@festival_flag'),
     ('Lineup: ', '@lineup'),
+    ('','__________________')
 ]
 
 source = ColumnDataSource(test_df)
@@ -189,6 +191,10 @@ view = CDSView(source=source)
 
 text_header = Div(text='<H1>Live Music Across Time<H1>', width=300, height=60)
 
+show_dat = source.data['show_date']
+view = CDSView(source=source, filters=[BooleanFilter(show_dat)])
+#filtered_table = DataTable(source=source, view=data_view)
+
 def ts_extract(xl_timestamp):
     d = datetime.datetime.fromtimestamp(int(xl_timestamp/ 1000)).strftime('%Y-%m-%d')
     return d
@@ -200,27 +206,27 @@ def update(attr, old, new):
 
     start = ts_extract(new[0])
     end = ts_extract(new[1])
+    #print(start, end)
     data=source.data
     mask = np.logical_and(data['datetime'] > start, data['datetime'] < end)
-    #source.data['show_date'] = mask
-    #print(data['index'].shape)
-    #source.trigger('change')
-
     view.filters=[BooleanFilter(mask)]
-    #p.view = view
+
 
 date_slider = DateRangeSlider(
-    title=" Adjust Date range",
+    title=" Adjust Event Date Range",
     start=min(test_df['datetime']),
     end=max(test_df['datetime']),
+    width=1000,
     step=1,
     value=(
         min(test_df['datetime']), max(test_df['datetime'])
     )
 )
 
-date_slider.on_change('value_throttled', update)
-# range bounds supplied in web mercator coordinates
+date_slider.on_change('value', update)
+
+# color map for circles object
+color_map = factor_cmap('festival_flag', palette=['dodgerblue', 'darkorange'], factors=sorted(test_df['festival_flag'].unique()))
 
 def update_artist(event):
 
@@ -271,13 +277,18 @@ genre_menu = genres
 genre_dropdown = Dropdown(label="Genre", button_type="warning", menu=genre_menu)
 genre_dropdown.on_click(update_genre)
 
-p = figure(x_range=(-18000000, 20000000), y_range=(-7500000, 11500000),
+p = figure(x_range=(-18000000, 20000000), y_range=(-7500000, 11500000), # range bounds supplied in web mercator coordinates
            x_axis_type='mercator', y_axis_type='mercator',
            height=700, width=1500,
-           tools=tools, tooltips=tooltips, active_scroll='wheel_zoom')
+           tools=tools, active_scroll='wheel_zoom',
+           tooltips=tooltips)
 p.add_tile(tile_provider)
-p.circle(x='MercatorX', y='MercatorY', size=6, fill_color='dodgerblue', line_color='dodgerblue', fill_alpha=.3, source=source, view=view)
+p.circle(x='MercatorX', y='MercatorY',
+         size=8, fill_color=color_map, line_color=color_map, fill_alpha=.3,
+         legend_group='festival_flag',
+         source=source, view=view)
 p.axis.visible = False
+p.legend.location = 'top_right'
 
 layout = layout([text_header], [[genre_dropdown], [artist_dropdown], [country_dropdown], [city_dropdown]], [date_slider], [p])#, [full_table], [filtered_table])
 

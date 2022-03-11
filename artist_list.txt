@@ -10,7 +10,7 @@ Bruno Mars
 Maroon 5
 Journey
 Katy Perry
-Guns N' Roses
+Guns N Roses
 Foo Fighters
 Red Hot Chili Peppers
 Volbeat
@@ -43,3 +43,19 @@ Marc Anthony
 Usher
 Tim McGraw
 Muse
+Tame Impala
+A$AP Rocky
+Prince
+Dua Lipa
+Flight Facilities
+Big Wild
+BlackPink
+Ariana Grande
+No Doubt
+Andrea Bocelli
+Hippo Campus
+Yo-Yo Ma
+Garth Brooks
+The Rolling Stones
+Bob Dylan
+The Grateful Dead
